@@ -2,18 +2,21 @@ package com.example.duc.pialarm;
 
 import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.app.VoiceInteractor;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.koushikdutta.async.future.FutureCallback;
@@ -96,13 +99,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         EditText editLink = (EditText) findViewById(R.id.editLink);
-        CheckBox chkBox = (CheckBox) findViewById(R.id.chkBox);
         Button btnZeit = (Button) findViewById(R.id.btnZeit);
         Button btnDatum = (Button) findViewById(R.id.btnDatum);
         Button btnFinish = (Button) findViewById(R.id.btnFinish);
         Button btnStop = (Button) findViewById(R.id.btnStop);
         int minute, hour, day, month;
-
 
         final DialogFragment newFragment = new TimePickerFragment();
         btnZeit.setOnClickListener(new View.OnClickListener() {
@@ -120,21 +121,35 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+
         btnStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                final ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
+                progressDialog.setIndeterminate(true);
+                progressDialog.setTitle("Sende Daten...");
+                progressDialog.show();
+
                 CommandRequest stop = new CommandRequest();
                 stop.setCommand("stop");
                 stop.setValue("");
 
                 Ion.with(MainActivity.this)
-                        .load("192.168.178.219")
+                        .load("http://192.168.178.219")
                         .setJsonPojoBody(stop)
                         .asString()
                         .setCallback(new FutureCallback<String>() {
                             @Override
                             public void onCompleted(Exception e, String result) {
+                                progressDialog.dismiss();
+                                Log.i("Timer", "OnCompleted:" + result);
+                                if( e != null ) {
+                                    Toast.makeText(MainActivity.this, "Fehler beim Senden:" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(MainActivity.this, "Prozess gekillt", Toast.LENGTH_SHORT).show();
 
+                                }
                             }
                         });
 
